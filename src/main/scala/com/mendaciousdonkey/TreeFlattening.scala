@@ -1,4 +1,6 @@
-import util.BinaryTreeNode
+package com.mendaciousdonkey
+
+import com.mendaciousdonkey.util.BinaryTreeNode
 
 object TreeFlattening {
 

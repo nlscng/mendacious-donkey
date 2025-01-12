@@ -1,7 +1,10 @@
+package com.mendaciousdonkey
+
 import scala.annotation.tailrec
 
 object FourSum {
-  def fourSum(numbers: List[Int], target: Int): List[Int] =
+  @tailrec
+  private def fourSum(numbers: List[Int], target: Int): List[Int] =
     if (numbers.size < 4) Nil
     else {
       val sorted = numbers.sorted

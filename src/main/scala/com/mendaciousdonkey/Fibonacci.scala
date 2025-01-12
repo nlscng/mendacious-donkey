@@ -1,3 +1,5 @@
+package com.mendaciousdonkey
+
 import scala.annotation.tailrec
 
 object Fibonacci {

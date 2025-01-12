@@ -1,3 +1,5 @@
+package com.mendaciousdonkey
+
 object ProductExceptSelf {
   private def productExceptSelf(numbers: List[Int]): List[Int] =
     val numToTake = numbers.size

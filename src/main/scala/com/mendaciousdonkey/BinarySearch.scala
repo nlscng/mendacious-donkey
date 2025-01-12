@@ -1,3 +1,5 @@
+package com.mendaciousdonkey
+
 import scala.annotation.tailrec
 import scala.math.Ordering.Implicits.infixOrderingOps
 

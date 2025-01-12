@@ -1,4 +1,4 @@
-package util
+package com.mendaciousdonkey.util
 
 case class BinaryTreeNode[A](value: A, left: Option[BinaryTreeNode[A]], right: Option[BinaryTreeNode[A]])
 
