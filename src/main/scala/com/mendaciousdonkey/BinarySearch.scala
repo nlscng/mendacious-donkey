@@ -22,7 +22,7 @@ object BinarySearch {
 
 
   @main
-  private def binarySearchMain(): Unit =
+  def binarySearchMain(): Unit =
     println("hello")
 
     val test1: IndexedSeq[Int] = IndexedSeq[Int](1, 2, 3, 5, 7, 11, 13, 17, 19)
