@@ -1,4 +1,4 @@
-package com.mendaciousdonkey.interviewprep.lists
+package com.mendaciousdonkey.practice.lists
 
 import scala.annotation.tailrec
 
