@@ -11,6 +11,7 @@ sealed abstract class RList[+T]:
   def ::[S >: T](elem: S): RList[S] = new::(elem, this)
   def apply(index: Int): T
   def applyOption(index: Int): Option[T]
+  def length: Int
 
 case object RNil extends RList[Nothing]:
   override def head: Nothing = throw new NoSuchElementException()
@@ -20,6 +21,7 @@ case object RNil extends RList[Nothing]:
   override def toString: String = "[]"
   override def apply(index: Int): Nothing = throw new NoSuchElementException()
   override def applyOption(index: Int): Option[Nothing] = None
+  override def length: Int = 0
 
 case class ::[+T](override val head: T, override val tail: RList[T]) extends RList[T]:
   override def isEmpty: Boolean = false
@@ -52,16 +54,29 @@ case class ::[+T](override val head: T, override val tail: RList[T]) extends RLi
 
     applyOptionTailRec(this, 0)
 
+  override def length: Int =
+    @tailrec
+    def lengthTailRec(remaining: RList[T], count: Int): Int =
+      if remaining.isEmpty then count
+      else lengthTailRec(remaining.tail, count + 1)
+
+    lengthTailRec(this, 0)
+
 
 object ListProblems extends App {
 //  private val aSmallList = ::(1, ::(2, ::(3, ::(4, RNil))))
   private val aSmallList = 1 :: 2 :: 3 :: 4 :: RNil
   println(aSmallList) // [1, 2, 3, 4]
 
-  println(aSmallList.apply(3)) // 4
+  println(s"The element at index 3: ${aSmallList.apply(3)}") // 4
 //  println(aSmallList(-1)) // exception
 
   println(aSmallList.applyOption(2)) // Some(3)
   println(aSmallList.applyOption(42)) // None
   println(aSmallList.applyOption(-3)) // None
+
+
+  // length
+  println(s"Length: ${aSmallList.length}") // 4
+
 }
