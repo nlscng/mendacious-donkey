@@ -12,6 +12,7 @@ sealed abstract class RList[+T]:
   def apply(index: Int): T
   def applyOption(index: Int): Option[T]
   def length: Int
+  def reverse: RList[T]
 
 case object RNil extends RList[Nothing]:
   override def head: Nothing = throw new NoSuchElementException()
@@ -22,6 +23,7 @@ case object RNil extends RList[Nothing]:
   override def apply(index: Int): Nothing = throw new NoSuchElementException()
   override def applyOption(index: Int): Option[Nothing] = None
   override def length: Int = 0
+  override def reverse: RList[Nothing] = this
 
 case class ::[+T](override val head: T, override val tail: RList[T]) extends RList[T]:
   override def isEmpty: Boolean = false
@@ -61,7 +63,12 @@ case class ::[+T](override val head: T, override val tail: RList[T]) extends RLi
       else lengthTailRec(remaining.tail, count + 1)
 
     lengthTailRec(this, 0)
+  override def reverse: RList[T] =
+    def reverseTailRec(remaining: RList[T], acc: RList[T]): RList[T] =
+      if remaining.isEmpty then acc
+      else reverseTailRec(remaining.tail, remaining.head :: acc)
 
+    reverseTailRec(this, RNil)
 
 object ListProblems extends App {
 //  private val aSmallList = ::(1, ::(2, ::(3, ::(4, RNil))))
@@ -79,4 +86,6 @@ object ListProblems extends App {
   // length
   println(s"Length: ${aSmallList.length}") // 4
 
+  // reverse
+  println(s"Reverse: ${aSmallList.reverse}")
 }
