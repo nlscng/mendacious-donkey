@@ -13,6 +13,7 @@ sealed abstract class RList[+T]:
   def applyOption(index: Int): Option[T]
   def length: Int
   def reverse: RList[T]
+  def ++[S >: T](other: RList[S]): RList[S]
 
 case object RNil extends RList[Nothing]:
   override def head: Nothing = throw new NoSuchElementException()
@@ -24,6 +25,7 @@ case object RNil extends RList[Nothing]:
   override def applyOption(index: Int): Option[Nothing] = None
   override def length: Int = 0
   override def reverse: RList[Nothing] = this
+  override def ++[S >: Nothing](other: RList[S]): RList[S] = other
 
 case class ::[+T](override val head: T, override val tail: RList[T]) extends RList[T]:
   override def isEmpty: Boolean = false
@@ -67,8 +69,16 @@ case class ::[+T](override val head: T, override val tail: RList[T]) extends RLi
     def reverseTailRec(remaining: RList[T], acc: RList[T]): RList[T] =
       if remaining.isEmpty then acc
       else reverseTailRec(remaining.tail, remaining.head :: acc)
-
     reverseTailRec(this, RNil)
+
+  override def ++[S >: T](other: RList[S]): RList[S] =
+    @tailrec
+    def recurse(remaining: RList[S], acc: RList[S]): RList[S] =
+      if remaining.isEmpty then acc
+      else recurse(remaining.tail, remaining.head :: acc)
+
+    recurse(this.reverse, other)
+
 
 object ListProblems extends App {
 //  private val aSmallList = ::(1, ::(2, ::(3, ::(4, RNil))))
@@ -88,4 +98,8 @@ object ListProblems extends App {
 
   // reverse
   println(s"Reverse: ${aSmallList.reverse}")
+
+  // concate
+  private val anotherSmallList = 6 :: 7 :: 8 :: 9 :: RNil
+  println(s"Concate aSmallList: $aSmallList with anotherSmallList: $anotherSmallList, we get: ${aSmallList ++ anotherSmallList}")
 }
