@@ -66,6 +66,7 @@ case class ::[+T](override val head: T, override val tail: RList[T]) extends RLi
 
     lengthTailRec(this, 0)
   override def reverse: RList[T] =
+    @tailrec
     def reverseTailRec(remaining: RList[T], acc: RList[T]): RList[T] =
       if remaining.isEmpty then acc
       else reverseTailRec(remaining.tail, remaining.head :: acc)
