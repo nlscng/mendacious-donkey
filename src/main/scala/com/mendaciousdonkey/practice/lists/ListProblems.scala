@@ -14,6 +14,7 @@ sealed abstract class RList[+T]:
   def length: Int
   def reverse: RList[T]
   def ++[S >: T](other: RList[S]): RList[S]
+  def removeAt(index: Int): RList[T]
 
 case object RNil extends RList[Nothing]:
   override def head: Nothing = throw new NoSuchElementException()
@@ -26,6 +27,7 @@ case object RNil extends RList[Nothing]:
   override def length: Int = 0
   override def reverse: RList[Nothing] = this
   override def ++[S >: Nothing](other: RList[S]): RList[S] = other
+  override def removeAt(index: Int): RList[Nothing] = RNil
 
 case class ::[+T](override val head: T, override val tail: RList[T]) extends RList[T]:
   override def isEmpty: Boolean = false
@@ -80,6 +82,14 @@ case class ::[+T](override val head: T, override val tail: RList[T]) extends RLi
 
     recurse(this.reverse, other)
 
+  override def removeAt(index: Int): RList[T] =
+    @tailrec
+    def removeAtTailRec(remaining: RList[T], count: Int, acc: RList[T]): RList[T] =
+      if count == index then remaining.tail.reverse ++ acc
+      else removeAtTailRec(remaining.tail, count + 1, remaining.head :: acc)
+
+    if index >= this.length || index < 0 then this
+    else removeAtTailRec(this, 0, RNil).reverse
 
 object ListProblems extends App {
 //  private val aSmallList = ::(1, ::(2, ::(3, ::(4, RNil))))
@@ -103,4 +113,11 @@ object ListProblems extends App {
   // concate
   private val anotherSmallList = 6 :: 7 :: 8 :: 9 :: RNil
   println(s"Concate aSmallList: $aSmallList with anotherSmallList: $anotherSmallList, we get: ${aSmallList ++ anotherSmallList}")
+
+
+  // remove at k
+  println(s"remove at k with k being 3: ${aSmallList.removeAt(2)}") // [1, 2, 4]
+  println(s"remove at k with k being -2: ${aSmallList.removeAt(-2)}") // no change
+  println(s"remove at k with k being 4: ${aSmallList.removeAt(4)}") // no change
+  println(s"remove at k with k being 0: ${aSmallList.removeAt(0)}") // [2, 3, 4]
 }
