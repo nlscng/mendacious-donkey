@@ -15,6 +15,9 @@ sealed abstract class RList[+T]:
   def reverse: RList[T]
   def ++[S >: T](other: RList[S]): RList[S]
   def removeAt(index: Int): RList[T]
+  def map[S](f: T => S): RList[S]
+  def flatmap[S](f: T => RList[S]): RList[S]
+  def filter(f: T => Boolean): RList[T]
 
 case object RNil extends RList[Nothing]:
   override def head: Nothing = throw new NoSuchElementException()
@@ -28,6 +31,9 @@ case object RNil extends RList[Nothing]:
   override def reverse: RList[Nothing] = this
   override def ++[S >: Nothing](other: RList[S]): RList[S] = other
   override def removeAt(index: Int): RList[Nothing] = RNil
+  override def map[S](f: Nothing => S): RList[S] = RNil
+  override def flatmap[S](f: Nothing => RList[S]): RList[S] = RNil
+  override def filter(f: Nothing => Boolean): RList[Nothing] = RNil
 
 case class ::[+T](override val head: T, override val tail: RList[T]) extends RList[T]:
   override def isEmpty: Boolean = false
@@ -91,6 +97,34 @@ case class ::[+T](override val head: T, override val tail: RList[T]) extends RLi
     if index >= this.length || index < 0 then this
     else removeAtTailRec(this, 0, RNil).reverse
 
+  override def map[S](f: T => S): RList[S] =
+    @tailrec
+    def mapTailRec(remaining: RList[T], acc: RList[S]): RList[S] =
+      if remaining.isEmpty then acc.reverse
+      else mapTailRec(remaining.tail, f(remaining.head) :: acc)
+
+    mapTailRec(this, RNil)
+
+  override def flatmap[S](f: T => RList[S]): RList[S] =
+    @tailrec
+    def flatmapTailRec(remaining: RList[T], acc: RList[S]): RList[S] =
+      if remaining.isEmpty then acc.reverse
+      else flatmapTailRec(remaining.tail, f(remaining.head).reverse ++ acc)
+
+    flatmapTailRec(this, RNil)
+
+  override def filter(f: T => Boolean): RList[T] =
+    @tailrec
+    def filterTailRec(remaining: RList[T], acc: RList[T]): RList[T] =
+      if remaining.isEmpty then acc.reverse
+      else {
+        val out = f(remaining.head)
+        if out then filterTailRec(remaining.tail, remaining.head :: acc)
+        else filterTailRec(remaining.tail, acc)
+      }
+
+    filterTailRec(this, RNil)
+
 object ListProblems extends App {
 //  private val aSmallList = ::(1, ::(2, ::(3, ::(4, RNil))))
   private val aSmallList = 1 :: 2 :: 3 :: 4 :: RNil
@@ -120,4 +154,10 @@ object ListProblems extends App {
   println(s"remove at k with k being -2: ${aSmallList.removeAt(-2)}") // no change
   println(s"remove at k with k being 4: ${aSmallList.removeAt(4)}") // no change
   println(s"remove at k with k being 0: ${aSmallList.removeAt(0)}") // [2, 3, 4]
+
+  // map
+  println(s"map: ${aSmallList.map(_ + 0.5)}")
+
+  // flatmap
+  println(s"flatmap: ${aSmallList.flatmap(x => x :: x*x :: RNil)}")
 }
