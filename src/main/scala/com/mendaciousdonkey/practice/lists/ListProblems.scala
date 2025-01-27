@@ -18,6 +18,7 @@ sealed abstract class RList[+T]:
   def map[S](f: T => S): RList[S]
   def flatmap[S](f: T => RList[S]): RList[S]
   def filter(f: T => Boolean): RList[T]
+  def runLengthEncoding: RList[(T, Int)]
 
 case object RNil extends RList[Nothing]:
   override def head: Nothing = throw new NoSuchElementException()
@@ -34,6 +35,7 @@ case object RNil extends RList[Nothing]:
   override def map[S](f: Nothing => S): RList[S] = RNil
   override def flatmap[S](f: Nothing => RList[S]): RList[S] = RNil
   override def filter(f: Nothing => Boolean): RList[Nothing] = RNil
+  override def runLengthEncoding: RList[Nothing] = RNil
 
 case class ::[+T](override val head: T, override val tail: RList[T]) extends RList[T]:
   override def isEmpty: Boolean = false
@@ -125,6 +127,16 @@ case class ::[+T](override val head: T, override val tail: RList[T]) extends RLi
 
     filterTailRec(this, RNil)
 
+  override def runLengthEncoding: RList[(T, Int)] =
+    @tailrec
+    def rleTailRec(remaining: RList[T], currentTuple: (T, Int), acc: RList[(T, Int)]): RList[(T, Int)] =
+      if remaining.isEmpty && currentTuple._2 == 0 then acc
+      else if remaining.isEmpty then currentTuple :: acc
+      else if remaining.head == currentTuple._1 then rleTailRec(remaining.tail, (currentTuple._1, currentTuple._2 + 1), acc)
+      else rleTailRec(remaining.tail, (remaining.head, 1), currentTuple :: acc)
+
+    rleTailRec(this.tail, (this.head, 1), RNil).reverse
+
 object ListProblems extends App {
 //  private val aSmallList = ::(1, ::(2, ::(3, ::(4, RNil))))
   private val aSmallList = 1 :: 2 :: 3 :: 4 :: RNil
@@ -160,4 +172,8 @@ object ListProblems extends App {
 
   // flatmap
   println(s"flatmap: ${aSmallList.flatmap(x => x :: x*x :: RNil)}")
+
+  // run length encoding
+  private val listWithDuplicates = 1 :: 1 :: 1 :: 2 :: 2 :: 3 :: 3 :: 3 :: 42 :: 42 :: RNil
+  println(s"run length encoding: ${listWithDuplicates.runLengthEncoding}")
 }
