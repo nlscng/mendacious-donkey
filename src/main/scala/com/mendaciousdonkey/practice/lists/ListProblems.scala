@@ -19,6 +19,7 @@ sealed abstract class RList[+T]:
   def flatmap[S](f: T => RList[S]): RList[S]
   def filter(f: T => Boolean): RList[T]
   def runLengthEncoding: RList[(T, Int)]
+  def duplicateEach(k: Int): RList[T]
 
 case object RNil extends RList[Nothing]:
   override def head: Nothing = throw new NoSuchElementException()
@@ -36,6 +37,7 @@ case object RNil extends RList[Nothing]:
   override def flatmap[S](f: Nothing => RList[S]): RList[S] = RNil
   override def filter(f: Nothing => Boolean): RList[Nothing] = RNil
   override def runLengthEncoding: RList[Nothing] = RNil
+  override def duplicateEach(k: Int): RList[Nothing] = RNil
 
 case class ::[+T](override val head: T, override val tail: RList[T]) extends RList[T]:
   override def isEmpty: Boolean = false
@@ -137,6 +139,15 @@ case class ::[+T](override val head: T, override val tail: RList[T]) extends RLi
 
     rleTailRec(this.tail, (this.head, 1), RNil).reverse
 
+  override def duplicateEach(k: Int): RList[T] =
+    @tailrec
+    def duplicateEachTailRec(remaining: RList[T], currentElement: T, numDuplicated: Int, acc: RList[T]): RList[T] =
+      if remaining.isEmpty && numDuplicated == k then acc
+      else if numDuplicated == k then duplicateEachTailRec(remaining.tail, remaining.head, 0, currentElement :: acc)
+      else duplicateEachTailRec(remaining, currentElement, numDuplicated + 1, currentElement :: acc)
+
+    duplicateEachTailRec(this.tail, this.head, 0, RNil).reverse
+
 object ListProblems extends App {
 //  private val aSmallList = ::(1, ::(2, ::(3, ::(4, RNil))))
   private val aSmallList = 1 :: 2 :: 3 :: 4 :: RNil
@@ -176,4 +187,9 @@ object ListProblems extends App {
   // run length encoding
   private val listWithDuplicates = 1 :: 1 :: 1 :: 2 :: 2 :: 3 :: 3 :: 3 :: 42 :: 42 :: RNil
   println(s"run length encoding: ${listWithDuplicates.runLengthEncoding}")
+
+  // duplicate each
+  private val numRepeat: Int = 3
+  println(s"duplicate each with k of $numRepeat: ${aSmallList.duplicateEach(numRepeat)}")
+  println(s"duplicate each with empty RNil: ${RNil.duplicateEach(numRepeat)}")
 }
