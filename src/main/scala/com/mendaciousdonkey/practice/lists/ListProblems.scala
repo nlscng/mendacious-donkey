@@ -20,6 +20,7 @@ sealed abstract class RList[+T]:
   def filter(f: T => Boolean): RList[T]
   def runLengthEncoding: RList[(T, Int)]
   def duplicateEach(k: Int): RList[T]
+  def rotateLeft(k: Int): RList[T]
 
 case object RNil extends RList[Nothing]:
   override def head: Nothing = throw new NoSuchElementException()
@@ -38,6 +39,7 @@ case object RNil extends RList[Nothing]:
   override def filter(f: Nothing => Boolean): RList[Nothing] = RNil
   override def runLengthEncoding: RList[Nothing] = RNil
   override def duplicateEach(k: Int): RList[Nothing] = RNil
+  override def rotateLeft(k: Int): RList[Nothing] = RNil
 
 case class ::[+T](override val head: T, override val tail: RList[T]) extends RList[T]:
   override def isEmpty: Boolean = false
@@ -148,6 +150,23 @@ case class ::[+T](override val head: T, override val tail: RList[T]) extends RLi
 
     duplicateEachTailRec(this.tail, this.head, 0, RNil).reverse
 
+  override def rotateLeft(k: Int): RList[T] =
+    if k == 0 then this
+    else
+      @tailrec
+      def makePositive(i: Int): Int =
+        if i >= 0 then i
+        else makePositive(i + this.length)
+
+      val positiveK = makePositive(k)
+      val targetRotation: Int = positiveK % this.length
+      @tailrec
+      def rotateLeftTailRec(remaining: RList[T], currentRotation: Int, acc: RList[T]): RList[T] =
+        if currentRotation == targetRotation then remaining ++ acc.reverse
+        else rotateLeftTailRec(remaining.tail, currentRotation + 1, remaining.head :: acc)
+
+      rotateLeftTailRec(this, 0, RNil)
+
 object ListProblems extends App {
 //  private val aSmallList = ::(1, ::(2, ::(3, ::(4, RNil))))
   private val aSmallList = 1 :: 2 :: 3 :: 4 :: RNil
@@ -192,4 +211,10 @@ object ListProblems extends App {
   private val numRepeat: Int = 3
   println(s"duplicate each with k of $numRepeat: ${aSmallList.duplicateEach(numRepeat)}")
   println(s"duplicate each with empty RNil: ${RNil.duplicateEach(numRepeat)}")
+
+  // rotate left
+  private val rotationCount = 42
+  println(s"rotate left with k of $rotationCount: ${aSmallList.rotateLeft(rotationCount)}")
+  println(s"rotate left with k of -3: ${aSmallList.rotateLeft(-3)}")
+  println(s"rotate left with k of 1: ${aSmallList.rotateLeft(1)}")
 }
