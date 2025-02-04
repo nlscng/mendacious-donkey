@@ -1,6 +1,7 @@
 package com.mendaciousdonkey.practice.lists
 
 import scala.annotation.tailrec
+import scala.util.Random
 
 sealed abstract class RList[+T]:
   def head: T
@@ -21,6 +22,16 @@ sealed abstract class RList[+T]:
   def runLengthEncoding: RList[(T, Int)]
   def duplicateEach(k: Int): RList[T]
   def rotateLeft(k: Int): RList[T]
+  def sample(k: Int): RList[T]
+
+object RList:
+  def from[T](iterable: Iterable[T]): RList[T] =
+    @tailrec
+    def fromTailRec(remaining: Iterable[T], acc: RList[T]): RList[T] =
+      if remaining.isEmpty then acc.reverse
+      else fromTailRec(remaining.tail, remaining.head :: acc)
+
+    fromTailRec(iterable, RNil)
 
 case object RNil extends RList[Nothing]:
   override def head: Nothing = throw new NoSuchElementException()
@@ -40,6 +51,7 @@ case object RNil extends RList[Nothing]:
   override def runLengthEncoding: RList[Nothing] = RNil
   override def duplicateEach(k: Int): RList[Nothing] = RNil
   override def rotateLeft(k: Int): RList[Nothing] = RNil
+  override def sample(k: Int): RList[Nothing] = RNil
 
 case class ::[+T](override val head: T, override val tail: RList[T]) extends RList[T]:
   override def isEmpty: Boolean = false
@@ -167,6 +179,12 @@ case class ::[+T](override val head: T, override val tail: RList[T]) extends RLi
 
       rotateLeftTailRec(this, 0, RNil)
 
+  override def sample(k: Int): RList[T] =
+    if k <= 0 || k > this.length then RNil
+    else
+      val random = Random(System.currentTimeMillis())
+      RList.from((1 to k).map(_ => random.nextInt(this.length)).map(index => this(index)))
+
 object ListProblems extends App {
 //  private val aSmallList = ::(1, ::(2, ::(3, ::(4, RNil))))
   private val aSmallList = 1 :: 2 :: 3 :: 4 :: RNil
@@ -217,4 +235,10 @@ object ListProblems extends App {
   println(s"rotate left with k of $rotationCount: ${aSmallList.rotateLeft(rotationCount)}")
   println(s"rotate left with k of -3: ${aSmallList.rotateLeft(-3)}")
   println(s"rotate left with k of 1: ${aSmallList.rotateLeft(1)}")
+
+  // sample
+  println(s"random sample with k of 2: ${aSmallList.sample(2)}")
+  println(s"random sample with k of 2: ${aSmallList.sample(2)}")
+  println(s"random sample with k of 0: ${aSmallList.sample(0)}")
+  println(s"random sample with k of 4: ${aSmallList.sample(4)}")
 }
