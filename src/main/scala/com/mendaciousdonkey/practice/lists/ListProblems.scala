@@ -123,13 +123,28 @@ case class ::[+T](override val head: T, override val tail: RList[T]) extends RLi
 
     mapTailRec(this, RNil)
 
+  /*
+  Complexity O(N^2)
+   */
   override def flatmap[S](f: T => RList[S]): RList[S] =
     @tailrec
     def flatmapTailRec(remaining: RList[T], acc: RList[S]): RList[S] =
       if remaining.isEmpty then acc.reverse
       else flatmapTailRec(remaining.tail, f(remaining.head).reverse ++ acc)
 
-    flatmapTailRec(this, RNil)
+    @tailrec
+    def betterFlatmap(remaining: RList[T], acc: RList[RList[S]]): RList[S] =
+      if remaining.isEmpty then concateAll(acc, RNil, RNil)
+      else betterFlatmap(remaining.tail, f(remaining.head).reverse :: acc)
+
+    @tailrec
+    def concateAll(remaining: RList[RList[S]], currentList: RList[S], acc: RList[S]): RList[S] =
+      if remaining.isEmpty && currentList.isEmpty then acc
+      else if currentList.isEmpty then concateAll(remaining.tail, remaining.head, acc)
+      else concateAll(remaining, currentList.tail, currentList.head :: acc)
+
+    betterFlatmap(this, RNil)
+//    flatmapTailRec(this, RNil)
 
   override def filter(f: T => Boolean): RList[T] =
     @tailrec
@@ -186,59 +201,69 @@ case class ::[+T](override val head: T, override val tail: RList[T]) extends RLi
       RList.from((1 to k).map(_ => random.nextInt(this.length)).map(index => this(index)))
 
 object ListProblems extends App {
-//  private val aSmallList = ::(1, ::(2, ::(3, ::(4, RNil))))
+
   private val aSmallList = 1 :: 2 :: 3 :: 4 :: RNil
-  println(aSmallList) // [1, 2, 3, 4]
+  private def testEasyProblems(): Unit =
+  //  private val aSmallList = ::(1, ::(2, ::(3, ::(4, RNil))))
+    println(aSmallList) // [1, 2, 3, 4]
 
-  println(s"The element at index 3: ${aSmallList.apply(3)}") // 4
-//  println(aSmallList(-1)) // exception
+    println(s"The element at index 3: ${aSmallList.apply(3)}") // 4
+  //  println(aSmallList(-1)) // exception
 
-  println(aSmallList.applyOption(2)) // Some(3)
-  println(aSmallList.applyOption(42)) // None
-  println(aSmallList.applyOption(-3)) // None
-
-
-  // length
-  println(s"Length: ${aSmallList.length}") // 4
-
-  // reverse
-  println(s"Reverse: ${aSmallList.reverse}")
-
-  // concate
-  private val anotherSmallList = 6 :: 7 :: 8 :: 9 :: RNil
-  println(s"Concate aSmallList: $aSmallList with anotherSmallList: $anotherSmallList, we get: ${aSmallList ++ anotherSmallList}")
+    println(aSmallList.applyOption(2)) // Some(3)
+    println(aSmallList.applyOption(42)) // None
+    println(aSmallList.applyOption(-3)) // None
 
 
-  // remove at k
-  println(s"remove at k with k being 3: ${aSmallList.removeAt(2)}") // [1, 2, 4]
-  println(s"remove at k with k being -2: ${aSmallList.removeAt(-2)}") // no change
-  println(s"remove at k with k being 4: ${aSmallList.removeAt(4)}") // no change
-  println(s"remove at k with k being 0: ${aSmallList.removeAt(0)}") // [2, 3, 4]
+    // length
+    println(s"Length: ${aSmallList.length}") // 4
 
-  // map
-  println(s"map: ${aSmallList.map(_ + 0.5)}")
+    // reverse
+    println(s"Reverse: ${aSmallList.reverse}")
 
-  // flatmap
-  println(s"flatmap: ${aSmallList.flatmap(x => x :: x*x :: RNil)}")
+    // concate
+    val anotherSmallList = 6 :: 7 :: 8 :: 9 :: RNil
+    println(s"Concate aSmallList: $aSmallList with anotherSmallList: $anotherSmallList, we get: ${aSmallList ++ anotherSmallList}")
 
-  // run length encoding
-  private val listWithDuplicates = 1 :: 1 :: 1 :: 2 :: 2 :: 3 :: 3 :: 3 :: 42 :: 42 :: RNil
-  println(s"run length encoding: ${listWithDuplicates.runLengthEncoding}")
 
-  // duplicate each
-  private val numRepeat: Int = 3
-  println(s"duplicate each with k of $numRepeat: ${aSmallList.duplicateEach(numRepeat)}")
-  println(s"duplicate each with empty RNil: ${RNil.duplicateEach(numRepeat)}")
+    // remove at k
+    println(s"remove at k with k being 3: ${aSmallList.removeAt(2)}") // [1, 2, 4]
+    println(s"remove at k with k being -2: ${aSmallList.removeAt(-2)}") // no change
+    println(s"remove at k with k being 4: ${aSmallList.removeAt(4)}") // no change
+    println(s"remove at k with k being 0: ${aSmallList.removeAt(0)}") // [2, 3, 4]
 
-  // rotate left
-  private val rotationCount = 42
-  println(s"rotate left with k of $rotationCount: ${aSmallList.rotateLeft(rotationCount)}")
-  println(s"rotate left with k of -3: ${aSmallList.rotateLeft(-3)}")
-  println(s"rotate left with k of 1: ${aSmallList.rotateLeft(1)}")
+    // map
+    println(s"map: ${aSmallList.map(_ + 0.5)}")
 
-  // sample
-  println(s"random sample with k of 2: ${aSmallList.sample(2)}")
-  println(s"random sample with k of 2: ${aSmallList.sample(2)}")
-  println(s"random sample with k of 0: ${aSmallList.sample(0)}")
-  println(s"random sample with k of 4: ${aSmallList.sample(4)}")
+    // flatmap
+    println(s"flatmap: ${aSmallList.flatmap(x => x :: x*x :: RNil)}")
+
+  private def testMediumProblems(): Unit =
+    // run length encoding
+    val listWithDuplicates = 1 :: 1 :: 1 :: 2 :: 2 :: 3 :: 3 :: 3 :: 42 :: 42 :: RNil
+    println(s"run length encoding: ${listWithDuplicates.runLengthEncoding}")
+
+    // duplicate each
+    val numRepeat: Int = 3
+    println(s"duplicate each with k of $numRepeat: ${aSmallList.duplicateEach(numRepeat)}")
+    println(s"duplicate each with empty RNil: ${RNil.duplicateEach(numRepeat)}")
+
+    // rotate left
+    val rotationCount = 42
+    println(s"rotate left with k of $rotationCount: ${aSmallList.rotateLeft(rotationCount)}")
+    println(s"rotate left with k of -3: ${aSmallList.rotateLeft(-3)}")
+    println(s"rotate left with k of 1: ${aSmallList.rotateLeft(1)}")
+
+    // sample
+    println(s"random sample with k of 2: ${aSmallList.sample(2)}")
+    println(s"random sample with k of 2: ${aSmallList.sample(2)}")
+    println(s"random sample with k of 0: ${aSmallList.sample(0)}")
+    println(s"random sample with k of 4: ${aSmallList.sample(4)}")
+
+    // flatmap with better performance implementation
+    println(s"better flatmap: ${aSmallList.flatmap(x => x :: x*2 :: RNil)}")
+
+//  testEasyProblems()
+
+  testMediumProblems()
 }
